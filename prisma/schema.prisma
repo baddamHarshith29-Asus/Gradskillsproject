@@ -1,0 +1,157 @@
+// prisma/schema.prisma
+
+datasource db {
+  provider = "sqlite"
+}
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+model Organization {
+  id        String   @id @default(cuid())
+  name      String
+  branches  Branch[]
+  createdAt DateTime @default(now())
+}
+
+model Branch {
+  id             String       @id @default(cuid())
+  name           String
+  city           String
+  address        String
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  floors         Floor[]
+  clients        Client[]
+  bookings       Booking[]
+  visitors       Visitor[]
+  employees      Employee[]
+  tickets        Ticket[]
+  createdAt      DateTime     @default(now())
+}
+
+model Floor {
+  id         String   @id @default(cuid())
+  name       String
+  branchId   String
+  branch     Branch   @relation(fields: [branchId], references: [id])
+  layoutJson String   // Konva.js canvas state stored as JSON string
+  spaces     Space[]
+}
+
+model Space {
+  id        String    @id @default(cuid())
+  name      String
+  type      String    // DESK | HOT_DESK | PRIVATE_OFFICE | MEETING_ROOM | PHONE_BOOTH | COMMON_AREA
+  capacity  Int
+  baseRate  Float
+  floorId   String
+  floor     Floor     @relation(fields: [floorId], references: [id])
+  bookings  Booking[]
+  amenities String    @default("[]") // Stored as a JSON array string of strings, e.g., '["Wifi", "Whiteboard"]'
+  isActive  Boolean   @default(true)
+}
+
+model Client {
+  id          String     @id @default(cuid())
+  name        String
+  company     String
+  email       String     @unique
+  phone       String?
+  whatsapp    String?
+  branchId    String
+  branch      Branch     @relation(fields: [branchId], references: [id])
+  lifecycle   String     @default("LEAD") // LEAD | PROSPECT | ONBOARDING | ACTIVE | AT_RISK | CHURNED
+  healthScore Int        @default(50)
+  contracts   Contract[]
+  bookings    Booking[]
+  invoices    Invoice[]
+  tickets     Ticket[]
+  createdAt   DateTime   @default(now())
+}
+
+model Contract {
+  id           String   @id @default(cuid())
+  clientId     String
+  client       Client   @relation(fields: [clientId], references: [id])
+  spaceId      String
+  startDate    DateTime
+  endDate      DateTime
+  monthlyRate  Float
+  status       String   @default("ACTIVE") // ACTIVE | EXPIRING | EXPIRED | RENEWED | TERMINATED
+  signedPdfUrl String?
+  signatureUrl String?
+  createdAt    DateTime @default(now())
+}
+
+model Booking {
+  id          String   @id @default(cuid())
+  spaceId     String
+  space       Space    @relation(fields: [spaceId], references: [id])
+  clientId    String?
+  client      Client?  @relation(fields: [clientId], references: [id])
+  branchId    String
+  branch      Branch   @relation(fields: [branchId], references: [id])
+  startTime   DateTime
+  endTime     DateTime
+  status      String   @default("CONFIRMED") // CONFIRMED | CANCELLED | COMPLETED | NO_SHOW
+  totalAmount Float
+  createdAt   DateTime @default(now())
+}
+
+model Visitor {
+  id         String    @id @default(cuid())
+  name       String
+  company    String?
+  email      String?
+  phone      String?
+  hostName   String
+  hostEmail  String
+  purpose    String?
+  branchId   String
+  branch     Branch    @relation(fields: [branchId], references: [id])
+  checkInAt  DateTime  @default(now())
+  checkOutAt DateTime?
+}
+
+model Invoice {
+  id        String    @id @default(cuid())
+  clientId  String
+  client    Client    @relation(fields: [clientId], references: [id])
+  amount    Float
+  tax       Float     @default(0)
+  status    String    @default("PENDING") // PENDING | PAID | OVERDUE | CANCELLED
+  dueDate   DateTime
+  paidAt    DateTime?
+  lineItems String    // Stored as JSON string
+  pdfUrl    String?
+  createdAt DateTime  @default(now())
+}
+
+model Employee {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  role      String   // SUPER_ADMIN | BRANCH_MANAGER | COMMUNITY_LEAD | FINANCE | MEMBER | VISITOR
+  branchId  String
+  branch    Branch   @relation(fields: [branchId], references: [id])
+  createdAt DateTime @default(now())
+}
+
+model Ticket {
+  id          String    @id @default(cuid())
+  title       String
+  description String
+  category    String
+  priority    String    @default("MEDIUM") // LOW | MEDIUM | HIGH | URGENT
+  status      String    @default("OPEN") // OPEN | IN_PROGRESS | RESOLVED | CLOSED
+  branchId    String
+  branch      Branch    @relation(fields: [branchId], references: [id])
+  clientId    String?
+  client      Client?   @relation(fields: [clientId], references: [id])
+  assigneeId  String?
+  createdAt   DateTime  @default(now())
+  resolvedAt  DateTime?
+}
