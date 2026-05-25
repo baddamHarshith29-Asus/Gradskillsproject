@@ -29,7 +29,7 @@ export async function handleLoginAction(role: UserRole) {
   await login(sessionUser);
 
   const defaultRoute = ROLE_ROUTES[role]?.[0] || "/dashboard";
-  redirect(defaultRoute);
+  return { success: true, redirectUrl: defaultRoute };
 }
 
 export async function handleCredentialsLoginAction(email: string) {

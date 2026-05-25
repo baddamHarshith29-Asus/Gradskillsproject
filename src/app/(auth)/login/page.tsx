@@ -87,7 +87,10 @@ export default function LoginPage() {
     setErrorMsg(null);
     setSuccessMsg(null);
     try {
-      await handleLoginAction(role);
+      const res = await handleLoginAction(role);
+      if (res.success && res.redirectUrl) {
+        window.location.href = res.redirectUrl;
+      }
     } catch (e) {
       console.error(e);
       setLoading(null);
