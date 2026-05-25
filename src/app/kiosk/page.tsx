@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { getBranchesAction, checkInVisitorAction } from "@/app/actions";
+import { handleSignOutAction } from "../(auth)/login/actions";
 import { useBranchStore } from "@/lib/store";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -285,8 +286,15 @@ export default function KioskPage() {
           </Card>
         )}
 
-        <div className="text-center text-[10px] text-neutral">
-          CoNexus OS v1.0.0 · Lobby Concierge Terminal
+        <div className="text-center text-[10px] text-neutral flex flex-col sm:flex-row items-center justify-center gap-2">
+          <span>CoNexus OS v1.0.0 · Lobby Concierge Terminal</span>
+          <span className="hidden sm:inline">·</span>
+          <button
+            onClick={() => handleSignOutAction()}
+            className="hover:text-brand-300 underline font-semibold transition-colors cursor-pointer"
+          >
+            Exit to Login Screen
+          </button>
         </div>
       </div>
     </div>
