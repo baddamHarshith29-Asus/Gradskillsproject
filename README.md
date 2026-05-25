@@ -4,55 +4,68 @@ CoNexus is a unified SaaS coworking operating system built to streamline operati
 
 ---
 
-## 🚀 Key Features (Hackathon Moat)
+## 📋 Project Overview
 
-1. **Multi-Center Control Center & AI Forecasting**
-   - Review MRR, occupancy, member rosters, and support queues across all center locations.
-   - Run browser-native linear regression models to predict 7-day seat utilization and adjust room bookings.
-
-2. **Interactive Seating Layouts & Bookings**
-   - Snapping grid canvas using `react-konva` for drawing desks and offices.
-   - Double-booking guards, real-time schedule calendars (`react-big-calendar`), and dynamic pricing calculators adjusting hourly rates (+15% during peak hours, -15% for off-peak periods).
-
-3. **5-Step Onboarding & E-Signatures**
-   - Wizard collect profiles, floor allocations, licensing terms, and hand-drawn signatures (`signature_pad`).
-   - Compiles metadata and signatures into a legal lease PDF dynamically (`pdf-lib`) for immediate download.
-
-4. **Financial Ledger & Renewals Pipeline**
-   - Compile custom invoices, calculate taxes, collect payments, and print PDF billing statements.
-   - Filter expiries by day ranges and trigger simulated email/WhatsApp alerts.
-
-5. **Concierge Lobby Kiosk & Ticketing SLAs**
-   - Fullscreen tablet concierge route at `/kiosk` for self-check-ins and host arrival alerts.
-   - SLA ticket board displaying support complaints. Tickets open for more than 4 hours flash a red warning badge.
+Managing multiple coworking branches often results in fragmented operations across visitor management, bookings, billing, and internal communications. CoNexus solves this by consolidating all tools into a single, high-fidelity dashboard. Designed for coworking operators, branch managers, community leads, and finance teams, CoNexus replaces disparate spreadsheets and messaging tools with a central, role-based operating system.
 
 ---
 
-## 🛠️ Technology Stack & Dependencies
+## 🛠️ Tech Stack Used
 
-- **Core**: Next.js 16 (App Router), React 19, TypeScript
-- **Database**: SQLite (Zero-config local development) with Prisma 7 ORM
-- **Styling**: Tailwind CSS v4 (Sleek dark mode theme: navy blue background, slate cards, blue accents)
-- **State**: Zustand (virtual WhatsApp alerts webhook console)
-- **Key Libraries**: `react-konva` (Konva), `react-big-calendar`, `pdf-lib`, `signature_pad`, `lucide-react`, `date-fns`
+*   **Frontend & Logic:** Next.js 16 (App Router), React 19, TypeScript
+*   **Database:** SQLite (Zero-config local engine) with Prisma 7 ORM
+*   **Styling:** Tailwind CSS v4 (Sleek custom dark mode theme with navy/slate surfaces and blue/emerald accents)
+*   **State Management:** Zustand (for reactive simulation and webhooks console)
+*   **Libraries:** 
+    *   `react-konva` & `konva` (Interactive grid snapping seating layouts)
+    *   `react-big-calendar` (Real-time booking and scheduling visualization)
+    *   `pdf-lib` (Dynamic client lease agreement PDF generation)
+    *   `signature_pad` (Smart e-signature capture)
+    *   `lucide-react` (Modern vector iconography)
+    *   `date-fns` (Date calculations and formatting)
 
 ---
 
-## 💻 Developer Setup & Running Locally
+## 🚀 Features Implemented
+
+1.  **Multi-Center Control Center & AI Forecasting:**
+    *   Unified view of MRR, occupancy, member rosters, and active support tickets across branches.
+    *   Browser-native linear regression models to predict 7-day seat utilization.
+2.  **Staff Registration & Authentication:**
+    *   Database-connected registration (`/register`) to create staff/employee accounts mapped to specific branches.
+    *   Database-connected credential sign-in (`/login`) verifying registered staff profiles.
+    *   Judges' Quick Login panel to instantly jump between core personas (Super Admin, Branch Manager, Community Lead, Finance, Member, Kiosk).
+3.  **Interactive Seating Layouts & Peak-Hour Bookings:**
+    *   Visual floor plan builder allowing drag-and-drop desk/office allocation.
+    *   Peak-hour pricing model (+15% peak surcharge, -15% off-peak discount) with double-booking collision guards.
+4.  **5-Step Onboarding & E-Signatures:**
+    *   Step-by-step wizard to collect member profile details, assign workspaces, establish leasing terms, and capture hand-drawn signatures.
+    *   Dynamic generation of legal lease PDFs containing captured signature metadata.
+5.  **Financial Ledger & SLA Ticketing:**
+    *   Custom invoice creator with automated tax calculations and billing statement generation.
+    *   SLA-monitored support ticketing board (breached tickets open > 4 hours flash warning flags).
+6.  **Concierge Lobby Kiosk:**
+    *   Self-check-in portal at `/kiosk` for visitors, notifying hosts on arrivals.
+
+---
+
+## 💻 Setup Instructions
+
+Follow these instructions to run the project locally:
 
 ### 1. Clone & Install Dependencies
+Ensure you use the legacy peer dependencies flag to avoid conflicts:
 ```bash
-npm install
+npm install --legacy-peer-deps
 ```
 
 ### 2. Configure Database & Environment
-Prisma 7 is configured to use JS-native driver adapters, mapping connection strings dynamically at runtime.
+Prisma is configured to use SQLite locally:
 ```bash
-# Push database schema & create SQLite db file
+# Push database schema & create local SQLite db file
 npx prisma db push
 
-# Populate database with rich demo dataset
-# Seed script generates Orgs, Branches, Spaces, Clients, Bookings, Invoices, Employees, and Tickets
+# Seed the database with a complete set of branches, floors, spaces, and clients
 npx prisma db seed
 ```
 
@@ -61,16 +74,3 @@ npx prisma db seed
 npm run dev
 ```
 Open [http://localhost:3000](http://localhost:3000) to view the application.
-
----
-
-## 🔑 Navigating the Hackathon Demo
-
-When accessing the app for the first time, you will be redirected to the login interface.
-
-To facilitate a quick, 5-minute presentation loop, the login screen includes **Quick Role Logins** for all primary personas:
-- **Super Admin / Branch Manager**: Grants complete control over dashboards, floor designs, and billing systems.
-- **Community Lead**: Filters views for client check-ins, onboarding workflows, and SLA complaints.
-- **Finance**: Restricts focus to revenue ledgers, billing structures, and invoice creations.
-- **CoNexus Member**: Grants self-service bookings, ticket submissions, and visitor pre-registrations.
-- **Visitor Kiosk**: Bypasses the shell and loads the public concierge self-check-in terminal `/kiosk`.

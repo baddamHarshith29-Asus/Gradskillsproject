@@ -21,11 +21,15 @@ import {
   Users,
   Wrench,
 } from "lucide-react";
-import { handleLoginAction } from "./actions";
+import { handleLoginAction, handleCredentialsLoginAction } from "./actions";
 import { type UserRole } from "@/lib/rbac";
 
 export default function LoginPage() {
   const [loading, setLoading] = useState<string | null>(null);
+  const [email, setEmail] = useState("demo@conexus.app");
+  const [password, setPassword] = useState("demo123");
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
   const quickLogins: {
     role: UserRole;
@@ -80,6 +84,8 @@ export default function LoginPage() {
 
   const triggerLogin = async (role: UserRole) => {
     setLoading(role);
+    setErrorMsg(null);
+    setSuccessMsg(null);
     try {
       await handleLoginAction(role);
     } catch (e) {
@@ -88,10 +94,25 @@ export default function LoginPage() {
     }
   };
 
-  const handleManualSubmit = (e: React.FormEvent) => {
+  const handleManualSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Default to Super Admin for credentials login for the hackathon
-    triggerLogin("SUPER_ADMIN");
+    setErrorMsg(null);
+    setSuccessMsg(null);
+    setLoading("credentials");
+
+    if (email === "demo@conexus.app") {
+      await triggerLogin("SUPER_ADMIN");
+      return;
+    }
+
+    const res = await handleCredentialsLoginAction(email);
+    if (res.success && res.redirectUrl) {
+      setSuccessMsg("Access Granted! Redirecting...");
+      window.location.href = res.redirectUrl;
+    } else {
+      setErrorMsg(res.error || "Authentication failed.");
+      setLoading(null);
+    }
   };
 
   return (
@@ -109,13 +130,24 @@ export default function LoginPage() {
       </CardHeader>
       <CardContent className="space-y-6">
         <form onSubmit={handleManualSubmit} className="space-y-4">
+          {errorMsg && (
+            <div className="p-3 text-xs bg-red-950/30 border border-red-500/30 rounded text-red-400">
+              {errorMsg}
+            </div>
+          )}
+          {successMsg && (
+            <div className="p-3 text-xs bg-emerald-950/30 border border-emerald-500/30 rounded text-emerald-400">
+              {successMsg}
+            </div>
+          )}
           <div className="space-y-2">
             <Label htmlFor="email" className="text-slate-200">Email Address</Label>
             <Input
               id="email"
               type="email"
               placeholder="demo@conexus.app"
-              defaultValue="demo@conexus.app"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               required
               className="border-brand-600 bg-brand-800 text-slate-100 placeholder:text-neutral focus:border-brand-400"
             />
@@ -126,7 +158,8 @@ export default function LoginPage() {
               id="password"
               type="password"
               placeholder="••••••••"
-              defaultValue="demo123"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
               required
               className="border-brand-600 bg-brand-800 text-slate-100 placeholder:text-neutral focus:border-brand-400"
             />
@@ -136,7 +169,7 @@ export default function LoginPage() {
             disabled={loading !== null}
             className="w-full bg-brand-400 text-white hover:bg-brand-300 transition-colors"
           >
-            {loading === "SUPER_ADMIN" ? (
+            {loading === "credentials" ? (
               "Signing in..."
             ) : (
               <>
@@ -146,6 +179,13 @@ export default function LoginPage() {
             )}
           </Button>
         </form>
+
+        <div className="text-center text-xs text-slate-300">
+          Don't have an account?{" "}
+          <a href="/register" className="text-brand-300 hover:text-brand-200 font-semibold underline transition-colors">
+            Register as Employee
+          </a>
+        </div>
 
         <div className="relative flex py-2 items-center">
           <div className="flex-grow border-t border-brand-600"></div>
