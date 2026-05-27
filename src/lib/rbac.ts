@@ -21,6 +21,8 @@ export const ROLE_ROUTES: Record<UserRole, string[]> = {
     "/team",
     "/settings",
     "/cms",
+    "/iot",
+    "/spatial-planner",
   ],
   BRANCH_MANAGER: [
     "/dashboard",
@@ -36,6 +38,8 @@ export const ROLE_ROUTES: Record<UserRole, string[]> = {
     "/team",
     "/settings",
     "/cms",
+    "/iot",
+    "/spatial-planner",
   ],
   COMMUNITY_LEAD: [
     "/dashboard",
@@ -45,22 +49,26 @@ export const ROLE_ROUTES: Record<UserRole, string[]> = {
     "/visitors",
     "/tickets",
     "/team",
-    "/settings"
+    "/settings",
+    "/iot",
+    "/spatial-planner",
   ],
   FINANCE: [
     "/dashboard",
     "/clients",
     "/finance",
     "/renewals",
-    "/settings"
+    "/settings",
   ],
   MEMBER: [
     "/booking",
     "/tickets",
-    "/visitors"
+    "/visitors",
+    "/iot",
+    "/spatial-planner",
   ],
   VISITOR: [
-    "/kiosk"
+    "/kiosk",
   ],
 };
 

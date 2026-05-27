@@ -533,7 +533,6 @@ export default function TicketsPage() {
                             </Button>
                           )}
                         </div>
-
                       </Card>
                     ))}
                   </div>
@@ -541,8 +540,6 @@ export default function TicketsPage() {
               </div>
             );
           })}
-        </div>
-      )}
         </div>
       )}
 
