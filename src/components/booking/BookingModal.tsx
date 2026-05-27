@@ -63,6 +63,16 @@ export default function BookingModal({
     }
   }, [isOpen]);
 
+  // Synchronize start and end times to prevent validation errors
+  useEffect(() => {
+    const startIdx = TIME_OPTIONS.indexOf(startTime);
+    const endIdx = TIME_OPTIONS.indexOf(endTime);
+    if (endIdx <= startIdx) {
+      const nextIdx = Math.min(startIdx + 2, TIME_OPTIONS.length - 1);
+      setEndTime(TIME_OPTIONS[nextIdx]);
+    }
+  }, [startTime]);
+
   if (!isOpen || !space) return null;
 
   // Calculate pricing

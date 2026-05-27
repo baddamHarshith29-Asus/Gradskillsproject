@@ -140,6 +140,59 @@ export default function FloorBuilderPage() {
     }
   };
 
+  const handleAddSpace = (type: string) => {
+    if (!selectedFloorId) {
+      toast.error("Please select or create a floor layout first!");
+      return;
+    }
+
+    let width = 60;
+    let height = 45;
+    let baseRate = 100;
+    let namePrefix = "Desk";
+
+    if (type === "MEETING_ROOM") {
+      width = 120;
+      height = 100;
+      baseRate = 600;
+      namePrefix = "Meeting Room";
+    } else if (type === "HOT_DESK") {
+      width = 100;
+      height = 70;
+      baseRate = 50;
+      namePrefix = "Hotdesk Area";
+    } else if (type === "PRIVATE_OFFICE") {
+      width = 140;
+      height = 110;
+      baseRate = 1200;
+      namePrefix = "Private Office";
+    } else if (type === "PHONE_BOOTH") {
+      width = 50;
+      height = 50;
+      baseRate = 150;
+      namePrefix = "Phone Booth";
+    }
+
+    const newId = `sp-${type.toLowerCase()}-${Math.random().toString(36).substring(7)}`;
+    const offset = (shapes.length % 5) * 15;
+    const newShape: CanvasShape = {
+      id: newId,
+      type,
+      x: 100 + offset,
+      y: 100 + offset,
+      width,
+      height,
+      name: `${namePrefix} ${shapes.length + 1}`,
+      capacity: type === "MEETING_ROOM" ? 8 : type === "PRIVATE_OFFICE" ? 4 : 1,
+      baseRate,
+      amenities: ["Wifi"],
+    };
+
+    setShapes([...shapes, newShape]);
+    setSelectedShapeId(newId);
+    toast.success(`Added ${newShape.name} to canvas!`);
+  };
+
   const selectedShape = shapes.find((s) => s.id === selectedShapeId) || null;
 
   return (
@@ -176,7 +229,7 @@ export default function FloorBuilderPage() {
         {/* Left Sidebar Palette */}
         <div className="lg:col-span-1 space-y-4">
           <Card className="border-brand-600 bg-brand-700 p-4">
-            <ShapeSidebar />
+            <ShapeSidebar onAddShape={handleAddSpace} />
           </Card>
           
           {/* Create Floor Mini-Form */}

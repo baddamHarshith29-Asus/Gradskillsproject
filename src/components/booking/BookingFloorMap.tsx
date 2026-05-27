@@ -21,6 +21,7 @@ interface BookingFloorMapProps {
   occupiedSpaceIds: Set<string>;
   spaceOccupantNames: Record<string, string>;
   onSelectSpace: (space: CanvasShape) => void;
+  onHoverSpace?: (space: CanvasShape | null) => void;
 }
 
 export default function BookingFloorMap({
@@ -28,6 +29,7 @@ export default function BookingFloorMap({
   occupiedSpaceIds,
   spaceOccupantNames,
   onSelectSpace,
+  onHoverSpace,
 }: BookingFloorMapProps) {
   const [stageDimensions] = useState({ width: 750, height: 500 });
 
@@ -35,7 +37,7 @@ export default function BookingFloorMap({
     if (isOccupied) return "#451a1a"; // Dark crimson for booked spaces
     switch (type) {
       case "MEETING_ROOM":
-        return "#1e3b8a font-medium"; // Deep blue
+        return "#1e3b8a"; // Deep blue
       case "PRIVATE_OFFICE":
         return "#312e81"; // Deep indigo
       case "PHONE_BOOTH":
@@ -140,12 +142,14 @@ export default function BookingFloorMap({
                   if (stage) {
                     stage.container().style.cursor = isOccupied ? "not-allowed" : "pointer";
                   }
+                  onHoverSpace?.(shape);
                 }}
                 onMouseLeave={(e) => {
                   const stage = e.target.getStage();
                   if (stage) {
                     stage.container().style.cursor = "default";
                   }
+                  onHoverSpace?.(null);
                 }}
               >
                 {/* Main Rect */}

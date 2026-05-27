@@ -38,10 +38,13 @@ export default function PropertiesPanel({
   // Update local states when selected shape changes
   useEffect(() => {
     if (selectedShape) {
-      setName(selectedShape.name);
-      setCapacity(selectedShape.capacity);
-      setBaseRate(selectedShape.baseRate);
-      setAmenities(selectedShape.amenities || []);
+      const handle = setTimeout(() => {
+        setName(selectedShape.name);
+        setCapacity(selectedShape.capacity);
+        setBaseRate(selectedShape.baseRate);
+        setAmenities(selectedShape.amenities || []);
+      }, 0);
+      return () => clearTimeout(handle);
     }
   }, [selectedShape]);
 

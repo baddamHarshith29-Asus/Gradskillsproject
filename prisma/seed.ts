@@ -91,6 +91,21 @@ async function main() {
     },
   });
 
+  const f1_3 = await prisma.floor.create({
+    data: {
+      name: "Floor 3 - Boardroom Loft",
+      branchId: b1.id,
+      layoutJson: JSON.stringify({
+        width: 800,
+        height: 600,
+        shapes: [
+          { id: "sp-12", type: "MEETING_ROOM", x: 100, y: 100, width: 150, height: 110, name: "Penthouse Boardroom", capacity: 16, baseRate: 1000 },
+          { id: "sp-13", type: "PRIVATE_OFFICE", x: 300, y: 100, width: 140, height: 110, name: "Executive Loft 301", capacity: 6, baseRate: 1800 },
+        ]
+      }),
+    },
+  });
+
   const f2_1 = await prisma.floor.create({
     data: {
       name: "Floor 1 - Ground Space",
@@ -101,6 +116,22 @@ async function main() {
         shapes: [
           { id: "sp-8", type: "MEETING_ROOM", x: 100, y: 100, width: 120, height: 100, name: "Boardroom Alpha", capacity: 12, baseRate: 800 },
           { id: "sp-9", type: "HOT_DESK", x: 300, y: 100, width: 120, height: 80, name: "BKC Hotdesking", capacity: 8, baseRate: 80 },
+        ]
+      }),
+    },
+  });
+
+  const f2_2 = await prisma.floor.create({
+    data: {
+      name: "Floor 2 - Sky Lounge",
+      branchId: b2.id,
+      layoutJson: JSON.stringify({
+        width: 800,
+        height: 600,
+        shapes: [
+          { id: "sp-14", type: "MEETING_ROOM", x: 100, y: 100, width: 130, height: 100, name: "Skyline Room", capacity: 8, baseRate: 700 },
+          { id: "sp-15", type: "HOT_DESK", x: 260, y: 100, width: 140, height: 80, name: "Premium Flex Hotdesk", capacity: 12, baseRate: 100 },
+          { id: "sp-16", type: "PHONE_BOOTH", x: 100, y: 220, width: 60, height: 60, name: "Acoustic Pod 2A", capacity: 1, baseRate: 200 },
         ]
       }),
     },
@@ -121,24 +152,54 @@ async function main() {
     },
   });
 
+  const f3_2 = await prisma.floor.create({
+    data: {
+      name: "Deck 2 - Sunset Terrace",
+      branchId: b3.id,
+      layoutJson: JSON.stringify({
+        width: 800,
+        height: 600,
+        shapes: [
+          { id: "sp-17", type: "PRIVATE_OFFICE", x: 100, y: 100, width: 140, height: 110, name: "Oceanfront Cabin", capacity: 4, baseRate: 1500 },
+          { id: "sp-18", type: "HOT_DESK", x: 270, y: 100, width: 150, height: 80, name: "Al-Fresco Flex desks", capacity: 8, baseRate: 50 },
+        ]
+      }),
+    },
+  });
+
   // 4. Spaces
   const spaces = [
-    // Downtown Hub Spaces
+    // Downtown Hub Spaces (Floor 1)
     { id: "sp-1", name: "Meeting Room A", type: "MEETING_ROOM", capacity: 8, baseRate: 600, floorId: f1_1.id, amenities: JSON.stringify(["Wifi", "Projector", "Whiteboard", "Tea/Coffee"]) },
     { id: "sp-2", name: "Phone Booth 1", type: "PHONE_BOOTH", capacity: 1, baseRate: 150, floorId: f1_1.id, amenities: JSON.stringify(["Wifi", "Acoustic Padding"]) },
     { id: "sp-3", name: "Dedicated Desk 1", type: "DESK", capacity: 1, baseRate: 100, floorId: f1_1.id, amenities: JSON.stringify(["Wifi", "Ergonomic Chair", "Monitor"]) },
     { id: "sp-4", name: "Dedicated Desk 2", type: "DESK", capacity: 1, baseRate: 100, floorId: f1_1.id, amenities: JSON.stringify(["Wifi", "Ergonomic Chair"]) },
     { id: "sp-5", name: "Hotdesk Zone X", type: "HOT_DESK", capacity: 6, baseRate: 50, floorId: f1_1.id, amenities: JSON.stringify(["Wifi", "Power Outlets"]) },
+    
+    // Downtown Hub Spaces (Floor 2)
     { id: "sp-6", name: "Executive Suite 201", type: "PRIVATE_OFFICE", capacity: 4, baseRate: 1200, floorId: f1_2.id, amenities: JSON.stringify(["Wifi", "Whiteboard", "Filing Cabinets", "AC"]) },
     { id: "sp-7", name: "Quiet Desk 1", type: "DESK", capacity: 1, baseRate: 120, floorId: f1_2.id, amenities: JSON.stringify(["Wifi", "Ergonomic Chair", "Noise Cancelling Panel"]) },
+    
+    // Downtown Hub Spaces (Floor 3)
+    { id: "sp-12", name: "Penthouse Boardroom", type: "MEETING_ROOM", capacity: 16, baseRate: 1000, floorId: f1_3.id, amenities: JSON.stringify(["Wifi", "Acoustic Padding", "4K TV Screen", "Video Conf", "Catering Service"]) },
+    { id: "sp-13", name: "Executive Loft 301", type: "PRIVATE_OFFICE", capacity: 6, baseRate: 1800, floorId: f1_3.id, amenities: JSON.stringify(["Wifi", "Whiteboard", "AC", "Personal Minibar", "Coffee Station"]) },
 
-    // Tech Park West Spaces
+    // Tech Park West Spaces (Floor 1)
     { id: "sp-8", name: "Boardroom Alpha", type: "MEETING_ROOM", capacity: 12, baseRate: 800, floorId: f2_1.id, amenities: JSON.stringify(["Wifi", "4K TV Screen", "Video Conf", "AC"]) },
     { id: "sp-9", name: "BKC Hotdesking", type: "HOT_DESK", capacity: 8, baseRate: 80, floorId: f2_1.id, amenities: JSON.stringify(["Wifi", "Ergonomic Chairs"]) },
+    
+    // Tech Park West Spaces (Floor 2)
+    { id: "sp-14", name: "Skyline Room", type: "MEETING_ROOM", capacity: 8, baseRate: 700, floorId: f2_2.id, amenities: JSON.stringify(["Wifi", "Projector", "AC", "High-speed Ethernet"]) },
+    { id: "sp-15", name: "Premium Flex Hotdesk", type: "HOT_DESK", capacity: 12, baseRate: 100, floorId: f2_2.id, amenities: JSON.stringify(["Wifi", "Ergonomic Chairs", "Coffee Bar Access"]) },
+    { id: "sp-16", name: "Acoustic Pod 2A", type: "PHONE_BOOTH", capacity: 1, baseRate: 200, floorId: f2_2.id, amenities: JSON.stringify(["Wifi", "Acoustic Padding", "LED Task lighting"]) },
 
-    // Waterfront Incubator Spaces
+    // Waterfront Incubator Spaces (Deck 1)
     { id: "sp-10", name: "Ocean Room", type: "MEETING_ROOM", capacity: 6, baseRate: 400, floorId: f3_1.id, amenities: JSON.stringify(["Wifi", "Balcony Access", "Whiteboard"]) },
     { id: "sp-11", name: "Sunset Lounge Desks", type: "HOT_DESK", capacity: 10, baseRate: 40, floorId: f3_1.id, amenities: JSON.stringify(["Wifi", "Coffee Bar"]) },
+    
+    // Waterfront Incubator Spaces (Deck 2)
+    { id: "sp-17", name: "Oceanfront Cabin", type: "PRIVATE_OFFICE", capacity: 4, baseRate: 1500, floorId: f3_2.id, amenities: JSON.stringify(["Wifi", "Ocean-facing Deck", "AC", "Premium Leather Sofa"]) },
+    { id: "sp-18", name: "Al-Fresco Flex desks", type: "HOT_DESK", capacity: 8, baseRate: 50, floorId: f3_2.id, amenities: JSON.stringify(["Wifi", "Outdoor Power Outlets", "Sunshades"]) },
   ];
 
   for (const s of spaces) {

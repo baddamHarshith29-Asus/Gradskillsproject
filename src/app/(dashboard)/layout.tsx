@@ -1,6 +1,7 @@
 import React from "react";
 import Sidebar from "@/components/layout/Sidebar";
 import Topbar from "@/components/layout/Topbar";
+import VoiceAssistant from "@/components/dashboard/VoiceAssistant";
 
 export default function DashboardLayout({
   children,
@@ -22,6 +23,9 @@ export default function DashboardLayout({
           {children}
         </main>
       </div>
+
+      {/* Floating AI Voice Command Portal */}
+      <VoiceAssistant />
     </div>
   );
 }

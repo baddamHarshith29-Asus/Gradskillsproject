@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, Suspense } from "react";
 import dynamic from "next/dynamic";
+import { useSearchParams } from "next/navigation";
 import { useBranchStore } from "@/lib/store";
 import { getBranchFloorsAction, getBranchesAction } from "@/app/actions";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -37,8 +38,11 @@ const TIME_OPTIONS = [
   "15:00", "16:00", "17:00", "18:00", "19:00", "20:00"
 ];
 
-export default function BookingPage() {
+function BookingPageContent() {
   const { selectedBranchId, setBranch } = useBranchStore();
+  const searchParams = useSearchParams();
+  const queryBranchId = searchParams ? searchParams.get("branch") : null;
+
   const [branches, setBranches] = useState<{ id: string; name: string }[]>([]);
   const [floors, setFloors] = useState<any[]>([]);
   const [selectedFloorId, setSelectedFloorId] = useState<string>("");
@@ -59,17 +63,30 @@ export default function BookingPage() {
   // Quick space type filters
   const [typeFilter, setTypeFilter] = useState<string>("ALL");
 
+  // Live Hover property inspector state
+  const [hoveredSpace, setHoveredSpace] = useState<any | null>(null);
+
   // 1. Initial load
   useEffect(() => {
     async function init() {
       const dbBranches = await getBranchesAction();
       setBranches(dbBranches);
+
+      // Auto-select branch if passed in search query
+      if (queryBranchId) {
+        const found = dbBranches.find((b) => b.id === queryBranchId);
+        if (found) {
+          setBranch(found.id, found.name);
+          return;
+        }
+      }
+
       if (dbBranches.length > 0 && selectedBranchId === "all") {
         setBranch(dbBranches[0].id, dbBranches[0].name);
       }
     }
     init();
-  }, []);
+  }, [queryBranchId]);
 
   // 2. Fetch floors and bookings when branch changes
   useEffect(() => {
@@ -77,6 +94,16 @@ export default function BookingPage() {
       loadBranchData();
     }
   }, [selectedBranchId]);
+
+  // Synchronize query start and end times to prevent invalid windows
+  useEffect(() => {
+    const startIdx = TIME_OPTIONS.indexOf(queryStartTime);
+    const endIdx = TIME_OPTIONS.indexOf(queryEndTime);
+    if (endIdx <= startIdx) {
+      const nextIdx = Math.min(startIdx + 2, TIME_OPTIONS.length - 1);
+      setQueryEndTime(TIME_OPTIONS[nextIdx]);
+    }
+  }, [queryStartTime]);
 
   async function loadBranchData() {
     // Load floors
@@ -161,6 +188,158 @@ export default function BookingPage() {
   const totalFloorSpacesCount = shapes.length;
   const occupiedCount = shapes.filter((s) => occupiedSpaceIds.has(s.id)).length;
   const utilizationRate = totalFloorSpacesCount > 0 ? (occupiedCount / totalFloorSpacesCount) : 0.5;
+
+  const getEffectiveRate = (baseRate: number) => {
+    if (utilizationRate > 0.7) {
+      return Math.round(baseRate * 1.15);
+    } else if (utilizationRate < 0.3) {
+      return Math.round(baseRate * 0.85);
+    }
+    return baseRate;
+  };
+
+  const renderPropertyInspector = () => {
+    const space = hoveredSpace;
+    return (
+      <Card className="border-brand-600 bg-brand-850 h-[510px] flex flex-col justify-between overflow-hidden relative shadow-lg">
+        {/* Glow detail background */}
+        <div className="absolute top-0 right-0 w-24 h-24 rounded-full bg-brand-400/5 blur-2xl pointer-events-none" />
+        
+        <CardHeader className="pb-3 border-b border-brand-600/40">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-brand-400">
+              Live Inspector
+            </span>
+            {space && (
+              <Badge variant="outline" className={`text-[10px] px-2 py-0.5 rounded font-mono ${
+                occupiedSpaceIds.has(space.id) ? "border-red-500/30 text-red-400 bg-red-950/20" : "border-emerald-500/30 text-emerald-400 bg-emerald-950/20"
+              }`}>
+                {occupiedSpaceIds.has(space.id) ? "● Occupied" : "● Available"}
+              </Badge>
+            )}
+          </div>
+          <CardTitle className="font-heading text-lg font-bold text-white mt-1">
+            {space ? space.name : "Select or Hover Space"}
+          </CardTitle>
+          <CardDescription className="text-[11px] text-neutral">
+            {space ? `Properties for ID: ${space.id.substring(0, 8)}...` : "Hover your mouse over a shape on the map canvas to inspect live states."}
+          </CardDescription>
+        </CardHeader>
+
+        <CardContent className="flex-1 p-4 space-y-4 text-xs overflow-y-auto">
+          {space ? (
+            <>
+              {/* Type and capacity */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-brand-900/45 border border-brand-600/30 rounded-lg p-2">
+                  <div className="text-neutral text-[9px] uppercase font-bold tracking-wider">Space Type</div>
+                  <div className="font-semibold text-slate-200 mt-0.5 flex items-center gap-1.5">
+                    <span className="text-[11px]">
+                      {space.type === "MEETING_ROOM" && "🤝 Meeting Room"}
+                      {space.type === "PRIVATE_OFFICE" && "💼 Private Office"}
+                      {space.type === "PHONE_BOOTH" && "📞 Phone Booth"}
+                      {space.type === "HOT_DESK" && "🟢 Hotdesk Area"}
+                      {space.type === "DESK" && "🖥️ Fixed Desk"}
+                    </span>
+                  </div>
+                </div>
+                <div className="bg-brand-900/45 border border-brand-600/30 rounded-lg p-2">
+                  <div className="text-neutral text-[9px] uppercase font-bold tracking-wider">Capacity</div>
+                  <div className="font-semibold text-slate-200 mt-0.5">{space.capacity} pax</div>
+                </div>
+              </div>
+
+              {/* Rates */}
+              <div className="bg-brand-900/45 border border-brand-600/30 rounded-lg p-3 space-y-2">
+                <div className="flex justify-between items-center text-slate-300 text-[11px]">
+                  <span>Base Rate:</span>
+                  <span className="font-semibold">₹{space.baseRate}/hour</span>
+                </div>
+                
+                {/* Dynamic pricing calculation */}
+                <div className="flex justify-between items-center text-slate-300 border-t border-brand-600/30 pt-2 text-[11px]">
+                  <span>Dynamic Rate:</span>
+                  <span className="font-bold text-xs text-brand-300">
+                    ₹{getEffectiveRate(space.baseRate)}/hour
+                  </span>
+                </div>
+                
+                <div className="text-[10px] text-neutral leading-relaxed">
+                  {utilizationRate > 0.7 ? (
+                    <span className="text-red-400">🔥 +15% Dynamic surcharge applied due to high demand.</span>
+                  ) : utilizationRate < 0.3 ? (
+                    <span className="text-emerald-400">✨ -15% Off-peak price discount active!</span>
+                  ) : (
+                    <span className="text-slate-400">Standard community pricing is currently in effect.</span>
+                  )}
+                </div>
+              </div>
+
+              {/* Occupant Detail */}
+              <div className="bg-brand-900/45 border border-brand-600/30 rounded-lg p-3">
+                <div className="text-neutral text-[9px] uppercase font-bold tracking-wider mb-1">Live Occupancy Status</div>
+                {occupiedSpaceIds.has(space.id) ? (
+                  <div className="space-y-1">
+                    <div className="text-red-400 font-semibold flex items-center gap-1.5">
+                      <span className="h-1.5 w-1.5 rounded-full bg-red-500 animate-pulse" />
+                      Booked / Reserved
+                    </div>
+                    <div className="text-[11px] text-slate-300 flex items-center gap-1">
+                      <User className="size-3 text-neutral" />
+                      <span>Host: <strong className="text-slate-200">{spaceOccupantNames[space.id] || "Reserved member"}</strong></span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-emerald-400 font-semibold flex items-center gap-1.5">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                    Available to reserve instantly
+                  </div>
+                )}
+              </div>
+
+              {/* Amenities */}
+              <div className="space-y-1.5">
+                <div className="text-neutral text-[9px] uppercase font-bold tracking-wider">Available Amenities</div>
+                <div className="flex flex-wrap gap-1">
+                  {space.amenities && space.amenities.length > 0 ? (
+                    space.amenities.map((amenity: string, idx: number) => (
+                      <span key={idx} className="bg-brand-800 text-slate-300 border border-brand-600/50 rounded px-2 py-0.5 text-[9px]">
+                        {amenity}
+                      </span>
+                    ))
+                  ) : (
+                    <span className="text-[10px] text-neutral italic">Standard workspace amenities included.</span>
+                  )}
+                </div>
+              </div>
+            </>
+          ) : (
+            <div className="flex flex-col items-center justify-center h-full text-center py-10 opacity-75">
+              <div className="size-16 rounded-full bg-brand-900/40 border border-brand-600/25 flex items-center justify-center text-xl mb-3 text-brand-400">
+                🔍
+              </div>
+              <span className="text-xs font-semibold text-slate-300">Space Inspector Inactive</span>
+              <span className="text-[10px] text-neutral max-w-[200px] mt-1 leading-relaxed">
+                Hover over a desk or office on the layout canvas to view its amenities, capacity, and current price.
+              </span>
+            </div>
+          )}
+        </CardContent>
+
+        {space && !occupiedSpaceIds.has(space.id) && (
+          <div className="p-3 border-t border-brand-600/40 bg-brand-900/40">
+            <Button
+              onClick={() => handleSelectSpace(space)}
+              className="w-full bg-brand-400 text-white hover:bg-brand-300 text-xs font-bold py-1.5 h-9 rounded transition-all shadow-md shadow-brand-400/10"
+            >
+              <CheckCircle2 className="size-3.5 mr-1.5" />
+              Book Space
+            </Button>
+          </div>
+        )}
+      </Card>
+    );
+  };
 
   return (
     <div className="space-y-6">
@@ -346,12 +525,20 @@ export default function BookingPage() {
                 </div>
 
                 {selectedFloorId ? (
-                  <BookingFloorMap
-                    shapes={shapes}
-                    occupiedSpaceIds={occupiedSpaceIds}
-                    spaceOccupantNames={spaceOccupantNames}
-                    onSelectSpace={handleSelectSpace}
-                  />
+                  <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
+                    <div className="xl:col-span-8">
+                      <BookingFloorMap
+                        shapes={shapes}
+                        occupiedSpaceIds={occupiedSpaceIds}
+                        spaceOccupantNames={spaceOccupantNames}
+                        onSelectSpace={handleSelectSpace}
+                        onHoverSpace={setHoveredSpace}
+                      />
+                    </div>
+                    <div className="xl:col-span-4">
+                      {renderPropertyInspector()}
+                    </div>
+                  </div>
                 ) : (
                   <div className="flex h-[400px] flex-col items-center justify-center text-center">
                     <Map className="size-12 text-brand-600 mb-3" />
@@ -395,5 +582,18 @@ export default function BookingPage() {
         />
       )}
     </div>
+  );
+}
+
+export default function BookingPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex h-[400px] w-full items-center justify-center rounded-xl border border-brand-600 bg-brand-850 text-neutral text-xs">
+        <Loader2 className="mr-2 size-5 animate-spin text-brand-400" />
+        Initialising Smart Booking system...
+      </div>
+    }>
+      <BookingPageContent />
+    </Suspense>
   );
 }

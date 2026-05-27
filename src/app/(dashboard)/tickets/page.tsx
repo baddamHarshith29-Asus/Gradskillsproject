@@ -20,7 +20,10 @@ import {
   User,
   Tags,
   Filter,
-  Loader2
+  Loader2,
+  MessageSquare,
+  Send,
+  X
 } from "lucide-react";
 
 const COLUMNS = ["OPEN", "IN_PROGRESS", "RESOLVED", "CLOSED"];
@@ -97,6 +100,57 @@ export default function TicketsPage() {
   // Filters State
   const [priorityFilter, setPriorityFilter] = useState("ALL");
   const [categoryFilter, setCategoryFilter] = useState("ALL");
+
+  // Chat simulator state
+  const [activeChatTicket, setActiveChatTicket] = useState<any | null>(null);
+  const [chatMessages, setChatMessages] = useState<any[]>([]);
+  const [chatInput, setChatInput] = useState("");
+
+  const handleOpenChat = (ticket: any) => {
+    setActiveChatTicket(ticket);
+    setChatMessages([
+      {
+        sender: "client",
+        name: ticket.client ? ticket.client.name : "Member",
+        company: ticket.client ? ticket.client.company : "Facility Lead",
+        text: `Regarding our logged complaint: "${ticket.title}". Do we have a dispatcher assigned?`,
+        time: "10:15 AM",
+      },
+      {
+        sender: "operator",
+        name: "CoNexus Operator",
+        text: `Greetings. Our operations dashboard has dispatched this issue as ${ticket.priority} priority. The technician is currently responding. SLA age is actively monitored.`,
+        time: "10:20 AM",
+      },
+    ]);
+  };
+
+  const handleSendChatMessage = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!chatInput.trim()) return;
+
+    const newMsg = {
+      sender: "client",
+      name: "You (Operations Hub)",
+      text: chatInput,
+      time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+    };
+
+    setChatMessages((prev) => [...prev, newMsg]);
+    setChatInput("");
+
+    setTimeout(() => {
+      setChatMessages((prev) => [
+        ...prev,
+        {
+          sender: "operator",
+          name: "CoNexus Operator",
+          text: `Update logged. Escalation vector updated. We'll update the SLA status sheet accordingly.`,
+          time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        },
+      ]);
+    }, 800);
+  };
 
   useEffect(() => {
     loadTicketsData();
@@ -441,6 +495,15 @@ export default function TicketsPage() {
 
                         {/* Transitions */}
                         <div className="flex justify-end gap-1.5 pt-2 border-t border-brand-600/30">
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            onClick={() => handleOpenChat(t)}
+                            className="h-7 w-7 text-neutral hover:text-white"
+                            title="Open Chat Support"
+                          >
+                            <MessageSquare className="size-3.5 text-brand-400" />
+                          </Button>
                           {col !== "OPEN" && (
                             <Button
                               size="icon"
@@ -478,6 +541,83 @@ export default function TicketsPage() {
               </div>
             );
           })}
+        </div>
+      )}
+        </div>
+      )}
+
+      {/* Live Chat drawer overlay */}
+      {activeChatTicket && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-brand-950/85 backdrop-blur-sm p-4 animate-fade-in font-sans">
+          <div className="relative w-full max-w-md rounded-2xl border border-brand-500/35 bg-brand-850 shadow-2xl flex flex-col h-[520px] overflow-hidden">
+            
+            {/* Header */}
+            <div className="bg-brand-900/70 p-4 border-b border-brand-600/40 flex items-center justify-between">
+              <div>
+                <span className="text-[9px] bg-brand-400/25 text-brand-300 font-bold px-2 py-0.5 rounded border border-brand-400/20 uppercase tracking-widest font-mono">
+                  SLA Chat Simulator
+                </span>
+                <h3 className="text-sm font-extrabold text-white mt-1.5 truncate max-w-[280px]">
+                  {activeChatTicket.title}
+                </h3>
+              </div>
+              <button
+                onClick={() => setActiveChatTicket(null)}
+                className="text-slate-400 hover:text-white p-1 rounded-md hover:bg-brand-700/50 transition-colors"
+              >
+                <X className="size-4.5" />
+              </button>
+            </div>
+
+            {/* Message lists */}
+            <div className="flex-1 p-4 overflow-y-auto space-y-3 bg-brand-900/20 flex flex-col justify-end">
+              <div className="text-[10px] text-neutral text-center italic select-none">
+                Support session synchronized. Real-time logging engaged.
+              </div>
+              
+              <div className="space-y-3 overflow-y-auto max-h-[320px] py-1">
+                {chatMessages.map((msg, idx) => (
+                  <div
+                    key={idx}
+                    className={`flex flex-col ${msg.sender === "client" ? "items-end" : "items-start"}`}
+                  >
+                    <div className="text-[9px] text-neutral mb-0.5 px-1 flex gap-1">
+                      <span className="font-bold text-slate-300">{msg.name}</span>
+                      <span>·</span>
+                      <span>{msg.time}</span>
+                    </div>
+                    <div
+                      className={`max-w-[85%] rounded-xl px-3 py-2 text-xs leading-relaxed shadow-sm ${
+                        msg.sender === "client"
+                          ? "bg-brand-400 text-white rounded-tr-none border border-brand-300/10"
+                          : "bg-brand-800 text-slate-200 rounded-tl-none border border-brand-600/45"
+                      }`}
+                    >
+                      {msg.text}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Input form */}
+            <form onSubmit={handleSendChatMessage} className="p-3 border-t border-brand-600/40 bg-brand-900/60 flex gap-2 items-center">
+              <input
+                type="text"
+                placeholder="Type message to dispatcher..."
+                value={chatInput}
+                onChange={(e) => setChatInput(e.target.value)}
+                className="flex-1 bg-brand-900 text-slate-100 text-xs placeholder:text-slate-400 pl-3 pr-3 py-2 rounded-md border border-brand-600/55 focus:border-brand-400 focus:outline-none h-9 font-medium"
+              />
+              <Button
+                type="submit"
+                className="h-9 px-3 bg-brand-600 border border-brand-500 hover:bg-brand-500 text-white rounded-md shrink-0 flex items-center justify-center"
+              >
+                <Send className="size-4" />
+              </Button>
+            </form>
+
+          </div>
         </div>
       )}
     </div>

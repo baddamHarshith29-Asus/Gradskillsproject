@@ -361,11 +361,14 @@ export async function generateInvoicePdf(
   yPosition -= 18;
   
   // Render line items
-  invoice.lineItems.forEach((item) => {
-    const itemTotal = item.quantity * item.price;
-    page.drawText(item.description, { x: margin + 10, y: yPosition, size: 9, font: fontHelvetica, color: rgb(0.06, 0.09, 0.15) });
-    page.drawText(item.quantity.toString(), { x: margin + 270, y: yPosition, size: 9, font: fontHelvetica, color: rgb(0.06, 0.09, 0.15) });
-    page.drawText(`INR ${item.price.toLocaleString()}`, { x: margin + 330, y: yPosition, size: 9, font: fontHelvetica, color: rgb(0.06, 0.09, 0.15) });
+  invoice.lineItems.forEach((item: any) => {
+    const qty = Number(item.quantity !== undefined ? item.quantity : (item.qty !== undefined ? item.qty : 1));
+    const rate = Number(item.price !== undefined ? item.price : (item.rate !== undefined ? item.rate : 0));
+    const itemTotal = qty * rate;
+    
+    page.drawText(item.description || "Workspace lease/service item", { x: margin + 10, y: yPosition, size: 9, font: fontHelvetica, color: rgb(0.06, 0.09, 0.15) });
+    page.drawText(qty.toString(), { x: margin + 270, y: yPosition, size: 9, font: fontHelvetica, color: rgb(0.06, 0.09, 0.15) });
+    page.drawText(`INR ${rate.toLocaleString()}`, { x: margin + 330, y: yPosition, size: 9, font: fontHelvetica, color: rgb(0.06, 0.09, 0.15) });
     page.drawText(`INR ${itemTotal.toLocaleString()}`, { x: width - margin - 70, y: yPosition, size: 9, font: fontHelvetica, color: rgb(0.06, 0.09, 0.15) });
     yPosition -= 20;
   });

@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import KPIRow from "@/components/dashboard/KPIRow";
 import BranchCard, { type BranchData } from "@/components/dashboard/BranchCard";
 import ForecastPanel from "@/components/dashboard/ForecastPanel";
+import SpaceRecommendation from "@/components/dashboard/SpaceRecommendation";
 import { forecastDemand } from "@/lib/forecast";
 
 // Dynamic routing config for Next.js server components
@@ -139,6 +140,7 @@ export default async function DashboardPage() {
         {/* AI Forecast panel */}
         <div className="lg:col-span-1">
           <ForecastPanel forecast={forecast} />
+          <SpaceRecommendation branches={branchesData} />
         </div>
       </div>
     </div>

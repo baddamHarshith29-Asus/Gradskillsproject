@@ -36,6 +36,64 @@ export default function RenewalsPage() {
   // Active Category Filter
   const [activeBucket, setActiveBucket] = useState("ALL");
 
+  // Signature canvas states
+  const canvasRef = React.useRef<HTMLCanvasElement | null>(null);
+  const [isDrawing, setIsDrawing] = useState(false);
+  const [isSigned, setIsSigned] = useState(false);
+
+  useEffect(() => {
+    if (selectedContract) {
+      setIsSigned(false);
+    }
+  }, [selectedContract]);
+
+  const startDrawing = (e: any) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    
+    const rect = canvas.getBoundingClientRect();
+    const x = (e.clientX || (e.touches && e.touches[0].clientX)) - rect.left;
+    const y = (e.clientY || (e.touches && e.touches[0].clientY)) - rect.top;
+    
+    ctx.strokeStyle = "#38bdf8"; // neon blue ink
+    ctx.lineWidth = 2.5;
+    ctx.lineCap = "round";
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    setIsDrawing(true);
+    setIsSigned(true);
+  };
+
+  const draw = (e: any) => {
+    if (!isDrawing) return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    
+    const rect = canvas.getBoundingClientRect();
+    const x = (e.clientX || (e.touches && e.touches[0].clientX)) - rect.left;
+    const y = (e.clientY || (e.touches && e.touches[0].clientY)) - rect.top;
+    
+    ctx.lineTo(x, y);
+    ctx.stroke();
+  };
+
+  const stopDrawing = () => {
+    setIsDrawing(false);
+  };
+
+  const clearSignature = () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    setIsSigned(false);
+  };
+
   useEffect(() => {
     loadRenewalsData();
   }, [selectedBranchId]);
@@ -397,6 +455,47 @@ export default function RenewalsPage() {
                     required
                   />
                 </div>
+
+                {/* E-Signature Canvas Pad */}
+                <div className="space-y-1.5 pt-2">
+                  <div className="flex justify-between items-center text-xs text-slate-300">
+                    <Label>Sign License Renewal Agreement *</Label>
+                    {isSigned && (
+                      <Badge className="bg-emerald-500/10 text-success border border-emerald-500/20 text-[9px] h-4">
+                        Signed
+                      </Badge>
+                    )}
+                  </div>
+                  <div className="border border-brand-600 rounded bg-brand-900/60 p-1 relative">
+                    <canvas
+                      ref={canvasRef}
+                      width={310}
+                      height={100}
+                      onMouseDown={startDrawing}
+                      onMouseMove={draw}
+                      onMouseUp={stopDrawing}
+                      onMouseLeave={stopDrawing}
+                      onTouchStart={startDrawing}
+                      onTouchMove={draw}
+                      onTouchEnd={stopDrawing}
+                      className="cursor-crosshair bg-slate-950/20 rounded block w-full"
+                    />
+                    {!isSigned && (
+                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none text-[10px] text-neutral italic">
+                        Draw signature here
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex justify-end pt-1">
+                    <button
+                      type="button"
+                      onClick={clearSignature}
+                      className="text-[10px] text-brand-300 hover:text-brand-200 underline font-semibold cursor-pointer"
+                    >
+                      Clear Pad
+                    </button>
+                  </div>
+                </div>
               </CardContent>
               <CardFooter className="flex justify-end gap-2 border-t border-brand-600/50 p-4">
                 <Button
@@ -409,7 +508,7 @@ export default function RenewalsPage() {
                 </Button>
                 <Button
                   type="submit"
-                  disabled={renewing}
+                  disabled={renewing || !isSigned}
                   className="h-8.5 text-xs bg-brand-400 hover:bg-brand-300 text-white font-semibold"
                 >
                   {renewing ? "Renewing..." : "Execute Renewal"}

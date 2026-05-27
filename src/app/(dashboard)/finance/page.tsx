@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import FinanceSandbox from "@/components/dashboard/FinanceSandbox";
 import {
   CreditCard,
   Plus,
@@ -172,7 +173,12 @@ export default function FinancePage() {
     try {
       let parsedItems = [];
       try {
-        parsedItems = JSON.parse(invoiceObj.lineItems);
+        const parsed = JSON.parse(invoiceObj.lineItems);
+        parsedItems = parsed.map((item: any) => ({
+          description: item.description || "Workspace lease/service item",
+          quantity: Number(item.quantity !== undefined ? item.quantity : (item.qty !== undefined ? item.qty : 1)),
+          price: Number(item.price !== undefined ? item.price : (item.rate !== undefined ? item.rate : invoiceObj.amount)),
+        }));
       } catch (e) {
         parsedItems = [{ description: "Workspace Leasing Fee", quantity: 1, price: invoiceObj.amount }];
       }
@@ -426,102 +432,112 @@ export default function FinancePage() {
         </Card>
       )}
 
-      {/* Ledger Table */}
-      <Card className="border-brand-600 bg-brand-700">
-        <div className="flex flex-col gap-4 p-4 border-b border-brand-600 sm:flex-row sm:items-center sm:justify-between">
-          <div className="space-y-1">
-            <span className="block font-heading text-xs font-bold text-slate-200">Center Invoices Ledger</span>
-            <span className="block text-[11px] text-neutral">Audit and collect payments on registered invoice assets.</span>
-          </div>
+      {/* Ledger Grid (Split Table and Sandbox Simulator) */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-4">
+        {/* Ledger Table (Left, Col span 3) */}
+        <div className="lg:col-span-3">
+          <Card className="border-brand-600 bg-brand-700">
+            <div className="flex flex-col gap-4 p-4 border-b border-brand-600 sm:flex-row sm:items-center sm:justify-between">
+              <div className="space-y-1">
+                <span className="block font-heading text-xs font-bold text-slate-200">Center Invoices Ledger</span>
+                <span className="block text-[11px] text-neutral">Audit and collect payments on registered invoice assets.</span>
+              </div>
 
-          {/* Filter Status */}
-          <div className="flex bg-brand-850 p-0.5 rounded border border-brand-600">
-            {["ALL", "PAID", "PENDING", "OVERDUE"].map((status) => (
-              <button
-                key={status}
-                onClick={() => setStatusFilter(status)}
-                className={`text-[10px] font-semibold px-2.5 py-1 rounded transition-colors ${
-                  statusFilter === status ? "bg-brand-600 text-white" : "text-slate-400 hover:text-white"
-                }`}
-              >
-                {status}
-              </button>
-            ))}
-          </div>
+              {/* Filter Status */}
+              <div className="flex bg-brand-850 p-0.5 rounded border border-brand-600">
+                {["ALL", "PAID", "PENDING", "OVERDUE"].map((status) => (
+                  <button
+                    key={status}
+                    onClick={() => setStatusFilter(status)}
+                    className={`text-[10px] font-semibold px-2.5 py-1 rounded transition-colors ${
+                      statusFilter === status ? "bg-brand-600 text-white" : "text-slate-400 hover:text-white"
+                    }`}
+                  >
+                    {status}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <CardContent className="p-0">
+              {loading ? (
+                <div className="flex h-40 items-center justify-center text-neutral text-xs animate-pulse">
+                  <Loader2 className="mr-2 size-5 animate-spin text-brand-400" />
+                  Loading invoices list...
+                </div>
+              ) : filteredInvoices.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-10 text-center">
+                  <FileText className="size-10 text-brand-600 mb-2" />
+                  <span className="text-xs font-semibold text-slate-300">No Invoices Found</span>
+                </div>
+              ) : (
+                <div className="divide-y divide-brand-600/50">
+                  {filteredInvoices.map((inv) => {
+                    const grandTotal = inv.amount + inv.tax;
+                    return (
+                      <div
+                        key={inv.id}
+                        className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center justify-between hover:bg-brand-700/50 transition-colors"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="flex size-9 items-center justify-center rounded bg-brand-800 border border-brand-600 text-brand-400">
+                            <FileText className="size-4.5" />
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs font-bold text-white">#{inv.id.substring(0, 8).toUpperCase()}</span>
+                              {getStatusBadge(inv.status)}
+                            </div>
+                            <span className="block text-[11px] text-neutral mt-0.5 font-medium">
+                              {inv.client?.company} · {inv.client?.name}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="flex flex-wrap gap-4 items-center">
+                          {/* Financial info */}
+                          <div className="text-right">
+                            <span className="block text-xs font-bold text-white">₹{grandTotal.toLocaleString()}</span>
+                            <span className="block text-[10px] text-neutral mt-0.5">
+                              Due: {new Date(inv.dueDate).toLocaleDateString()}
+                            </span>
+                          </div>
+
+                          {/* Download PDF button */}
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={() => handleDownloadPdf(inv)}
+                            className="h-8 w-8 border-brand-600 hover:bg-brand-800 text-neutral hover:text-white"
+                            title="Download PDF Invoice"
+                          >
+                            <Download className="size-3.5" />
+                          </Button>
+
+                          {/* Collect Payment */}
+                          {inv.status === "PENDING" && (
+                            <Button
+                              onClick={() => handlePayInvoice(inv.id)}
+                              className="h-8 text-xs bg-success hover:bg-success/90 text-white font-semibold"
+                            >
+                              Collect Payment
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </div>
 
-        <CardContent className="p-0">
-          {loading ? (
-            <div className="flex h-40 items-center justify-center text-neutral text-xs animate-pulse">
-              <Loader2 className="mr-2 size-5 animate-spin text-brand-400" />
-              Loading invoices list...
-            </div>
-          ) : filteredInvoices.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-10 text-center">
-              <FileText className="size-10 text-brand-600 mb-2" />
-              <span className="text-xs font-semibold text-slate-300">No Invoices Found</span>
-            </div>
-          ) : (
-            <div className="divide-y divide-brand-600/50">
-              {filteredInvoices.map((inv) => {
-                const grandTotal = inv.amount + inv.tax;
-                return (
-                  <div
-                    key={inv.id}
-                    className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center justify-between hover:bg-brand-700/50 transition-colors"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="flex size-9 items-center justify-center rounded bg-brand-800 border border-brand-600 text-brand-400">
-                        <FileText className="size-4.5" />
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-bold text-white">#{inv.id.substring(0, 8).toUpperCase()}</span>
-                          {getStatusBadge(inv.status)}
-                        </div>
-                        <span className="block text-[11px] text-neutral mt-0.5 font-medium">
-                          {inv.client?.company} · {inv.client?.name}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="flex flex-wrap gap-4 items-center">
-                      {/* Financial info */}
-                      <div className="text-right">
-                        <span className="block text-xs font-bold text-white">₹{grandTotal.toLocaleString()}</span>
-                        <span className="block text-[10px] text-neutral mt-0.5">
-                          Due: {new Date(inv.dueDate).toLocaleDateString()}
-                        </span>
-                      </div>
-
-                      {/* Download PDF button */}
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={() => handleDownloadPdf(inv)}
-                        className="h-8 w-8 border-brand-600 hover:bg-brand-800 text-neutral hover:text-white"
-                        title="Download PDF Invoice"
-                      >
-                        <Download className="size-3.5" />
-                      </Button>
-
-                      {/* Collect Payment */}
-                      {inv.status === "PENDING" && (
-                        <Button
-                          onClick={() => handlePayInvoice(inv.id)}
-                          className="h-8 text-xs bg-success hover:bg-success/90 text-white font-semibold"
-                        >
-                          Collect Payment
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+        {/* Financial Revenue forecasting simulator Sandbox (Right, Col span 1) */}
+        <div className="lg:col-span-1">
+          <FinanceSandbox />
+        </div>
+      </div>
     </div>
   );
 }

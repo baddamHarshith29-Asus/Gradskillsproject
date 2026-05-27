@@ -11,7 +11,11 @@ interface ShapePaletteItem {
   colorClass: string;
 }
 
-export default function ShapeSidebar() {
+interface ShapeSidebarProps {
+  onAddShape?: (type: string) => void;
+}
+
+export default function ShapeSidebar({ onAddShape }: ShapeSidebarProps) {
   const shapes: ShapePaletteItem[] = [
     {
       type: "MEETING_ROOM",
@@ -60,7 +64,7 @@ export default function ShapeSidebar() {
       <div>
         <h4 className="font-heading text-xs font-bold text-slate-200">Space Palette</h4>
         <p className="text-[10px] text-neutral mt-0.5">
-          Drag elements from this menu and drop them onto the floor layout canvas below.
+          Click any element to add, or drag and drop onto the layout canvas.
         </p>
       </div>
 
@@ -70,7 +74,8 @@ export default function ShapeSidebar() {
             key={shape.type}
             draggable
             onDragStart={(e) => handleDragStart(e, shape.type)}
-            className={`flex items-center gap-3 p-3 border rounded-lg cursor-grab active:cursor-grabbing transition-all duration-200 select-none ${shape.colorClass}`}
+            onClick={() => onAddShape?.(shape.type)}
+            className={`flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition-all duration-200 select-none ${shape.colorClass}`}
           >
             <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-brand-900/50 border border-brand-600/30">
               {shape.icon}

@@ -33,7 +33,9 @@ export default function SignatureStep({ onSave, onClear, savedSignature }: Signa
       });
 
       pad.addEventListener("endStroke", () => {
-        setHasSignature(true);
+        setTimeout(() => {
+          setHasSignature(true);
+        }, 0);
         onSave(pad.toDataURL());
       });
 
@@ -42,12 +44,22 @@ export default function SignatureStep({ onSave, onClear, savedSignature }: Signa
       // Pre-load signature if it already exists
       if (savedSignature) {
         pad.fromDataURL(savedSignature);
-        setHasSignature(true);
+        setTimeout(() => {
+          setHasSignature(true);
+        }, 0);
       }
 
       return () => {
         pad.off();
       };
+    }
+  }, []); // Mount-only to prevent lag & loops on stroke end
+
+  // Support external clearing (e.g. from parent wizard)
+  useEffect(() => {
+    if (padRef.current && !savedSignature) {
+      padRef.current.clear();
+      setHasSignature(false);
     }
   }, [savedSignature]);
 
